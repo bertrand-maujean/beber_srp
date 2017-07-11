@@ -39,7 +39,7 @@ Mise en garde :
 Utilise le module winreg livré avec Python 3.5 pour Windows
 A priori, aucune dépendance, marche directement avec une installation Windows de Python 3.5, sans rien ajouter.
 
-##FAQ
+## FAQ
 Pourquoi les hachés ne sont pas gérés ? 
 Parce que pour le moment je n'en ai pas eu besoin, mais je pense le faire un jour
 
