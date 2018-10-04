@@ -3,6 +3,7 @@ import re
 import random
 import time
 import struct
+import sys
 
 
 # Chemin de la branche de registre
@@ -11,6 +12,32 @@ saferBranch = r"SOFTWARE\Policies\Microsoft\Windows\safer"
 saferBranchEscaped=r"SOFTWARE\\Policies\\Microsoft\\Windows\\safer"
 #saferBranch = r"SOFTWARE\Policies\Microsoft\Windows\safertest"
 #saferBranchEscaped=r"SOFTWARE\\Policies\\Microsoft\\Windows\\safertest"
+
+
+
+
+# Adaptation entre Python 3.5 et 3.6
+# En python 3.5 le type REG_QWORD n'existe pas, et on utilise un packed byte
+# En python 3.6, il existe et on l'utilise
+if sys.version_info.major != 3:
+        print ("Erreur, il faut un python 3.5 ou 3.6")
+        exit(0)
+        
+if sys.version_info.minor == 6:
+        reg_qword = True
+        
+elif sys.version_info.minor == 5:
+        reg_qword = False
+        
+else:
+        print("Erreur : il faut un python3.5 ou 3.6 !")
+        exit(0)
+
+        
+        
+        
+                
+
 
 
 # Genere un GUID 128 entre accolades
@@ -26,15 +53,21 @@ def newGUID():
         h=format(random.randint(0,65535), "04x")
         return "{"+a+b+"-"+c+"-"+d+"-"+e+"-"+f+g+h+"}"
 
-
-
-# Genere un "LastModified" en packed byte
-def newLastModified():
-    t = time.time() # float
-    t = 100000000*t
-    t = int(t)
-    r = struct.pack("<q", t)
-    return r
+if reg_qword:
+        def newLastModified():
+            t = time.time() # float
+            t = 100000000*t
+            t = int(t)
+            return t
+        
+else:
+        # Genere un "LastModified" en packed byte
+        def newLastModified():
+            t = time.time() # float
+            t = 100000000*t
+            t = int(t)
+            r = struct.pack("<q", t)
+            return r
 
 
 # Retourne True si il faut utiliser REG_EXPAND_SZ au lieu de REG_SZ
@@ -130,8 +163,11 @@ class CpathSRP:
                                 
                 elif self.a_enregistrer==1:
                         key=winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, self.keyRegistre) # Create fait l'effet d'un Open sur une clé existante
-                        
-                        winreg.SetValueEx(key, "LastModified", 0, 11, newLastModified())
+                        if reg_qword:
+                                winreg.SetValueEx(key, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                        else:
+                                winreg.SetValueEx(key, "LastModified", 0, 11, newLastModified())
+                                
                         winreg.SetValueEx(key, "Description", 0, winreg.REG_SZ, self.description)
                         winreg.SetValueEx(key, "SaferFlags", 0, winreg.REG_DWORD, 0)
                         if isExpandable(self.chemin):
@@ -368,7 +404,11 @@ def regles_initiales():
 				
                 guid=newGUID()
                 key2=winreg.CreateKey(key,guid)
-                winreg.SetValueEx(key2, "LastModified", 0, 11, newLastModified())
+                if reg_qword:
+                        winreg.SetValueEx(key2, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                else:
+                        winreg.SetValueEx(key2, "LastModified", 0, 11, newLastModified())
+                        
                 winreg.SetValueEx(key2, "Description", 0, winreg.REG_SZ, r"Repertoire Windows")
                 winreg.SetValueEx(key2, "SaferFlags", 0, winreg.REG_DWORD, 0)
                 winreg.SetValueEx(key2, "ItemData", 0, winreg.REG_EXPAND_SZ, r"%HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRoot%")
@@ -377,7 +417,10 @@ def regles_initiales():
                 
                 guid=newGUID()
                 key2=winreg.CreateKey(key,guid)
-                winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
+                if reg_qword:
+                        winreg.SetValueEx(key2, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                else:
+                        winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
                 winreg.SetValueEx(key2, "Description",          0, winreg.REG_SZ, r"Program Files on 64 bits")
                 winreg.SetValueEx(key2, "SaferFlags",           0, winreg.REG_DWORD, 0)
                 winreg.SetValueEx(key2, "ItemData",             0, winreg.REG_EXPAND_SZ, r"%HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\ProgramFilesDir%")
@@ -385,7 +428,10 @@ def regles_initiales():
 				
                 guid=newGUID()
                 key2=winreg.CreateKey(key,guid)
-                winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
+                if reg_qword:
+                        winreg.SetValueEx(key2, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                else:
+                        winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
                 winreg.SetValueEx(key2, "Description",          0, winreg.REG_SZ, r"Program Files x86")
                 winreg.SetValueEx(key2, "SaferFlags",           0, winreg.REG_DWORD, 0)
                 winreg.SetValueEx(key2, "ItemData",             0, winreg.REG_SZ, r"C:\Program Files (x86)")
@@ -393,7 +439,10 @@ def regles_initiales():
 
                 guid=newGUID()
                 key2=winreg.CreateKey(key,guid)
-                winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
+                if reg_qword:
+                        winreg.SetValueEx(key2, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                else:
+                        winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
                 winreg.SetValueEx(key2, "Description",          0, winreg.REG_SZ, r"%ProgramW6432%")
                 winreg.SetValueEx(key2, "SaferFlags",           0, winreg.REG_DWORD, 0)
                 winreg.SetValueEx(key2, "ItemData",             0, winreg.REG_EXPAND_SZ, r"%ProgramW6432%")
@@ -401,7 +450,10 @@ def regles_initiales():
 
                 guid=newGUID()
                 key2=winreg.CreateKey(key,guid)
-                winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
+                if reg_qword:
+                        winreg.SetValueEx(key2, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                else:
+                        winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
                 winreg.SetValueEx(key2, "Description",          0, winreg.REG_SZ, r"%ProgramFiles(x86)%")
                 winreg.SetValueEx(key2, "SaferFlags",           0, winreg.REG_DWORD, 0)
                 winreg.SetValueEx(key2, "ItemData",             0, winreg.REG_EXPAND_SZ, r"%ProgramFiles(x86)%")
@@ -409,7 +461,10 @@ def regles_initiales():
 
                 guid=newGUID()
                 key2=winreg.CreateKey(key,guid)
-                winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
+                if reg_qword:
+                        winreg.SetValueEx(key2, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                else:
+                        winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
                 winreg.SetValueEx(key2, "Description",          0, winreg.REG_SZ, r"%ProgramFiles%")
                 winreg.SetValueEx(key2, "SaferFlags",           0, winreg.REG_DWORD, 0)
                 winreg.SetValueEx(key2, "ItemData",             0, winreg.REG_EXPAND_SZ, r"%ProgramFiles%")
@@ -417,7 +472,10 @@ def regles_initiales():
 
                 guid=newGUID()
                 key2=winreg.CreateKey(key,guid)
-                winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
+                if reg_qword:
+                        winreg.SetValueEx(key2, "LastModified", 0, winreg.REG_QWORD, newLastModified())
+                else:
+                        winreg.SetValueEx(key2, "LastModified",         0, 11, newLastModified())
                 winreg.SetValueEx(key2, "Description",          0, winreg.REG_SZ, r"%SystemRoot%")
                 winreg.SetValueEx(key2, "SaferFlags",           0, winreg.REG_DWORD, 0)
                 winreg.SetValueEx(key2, "ItemData",             0, winreg.REG_EXPAND_SZ, r"%SystemRoot%")
@@ -835,5 +893,10 @@ print ("(panneau de config/système/protection du système/créer)")
 print ("Assurez vous également d'avoir accès au mode sans échec (F8 au démarrage / bcdedit /set {bootmgr} displaybootmenu yes pour W>=8)")
 
 print ("---------------------")
+
+
+
+
+
 menu_principal()
 
